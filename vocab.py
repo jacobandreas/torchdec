@@ -3,6 +3,7 @@ class Vocab(object):
     SOS = '<s>'
     EOS = '</s>'
     COPY = '<copy>'
+    UNK = '<unk>'
 
     def __init__(self):
         self._contents = {}
@@ -11,6 +12,7 @@ class Vocab(object):
         self.add(self.SOS)
         self.add(self.EOS)
         self.add(self.COPY)
+        self.add(self.UNK)
 
     def add(self, sym):
         if sym not in self._contents:
@@ -28,12 +30,17 @@ class Vocab(object):
     def __len__(self):
         return len(self._contents)
 
-    def encode(self, seq):
+    def encode(self, seq, unk=False):
+        if unk:
+            seq = [s if s in self else self.UNK for s in seq]
         return [self.sos()] + [self[i] for i in seq] + [self.eos()]
 
     def decode(self, seq):
         out = [self._rev_contents[i] for i in seq]
         return [o for o in out if o not in (self.SOS, self.EOS)]
+
+    def get(self, i):
+        return self._rev_contents[i]
 
     def pad(self):
         return self._contents[self.PAD]

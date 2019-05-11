@@ -46,7 +46,6 @@ class SimpleAttention(nn.Module):
         self.make_val = nn.Linear(n_features, n_hidden)
         self.n_out = n_hidden
 
-    @profile
     def forward(self, features, hidden, mask):
         # key
         if self.key:
@@ -110,7 +109,6 @@ class Decoder(nn.Module):
         self.rnn = nn.LSTM(n_embed + n_hidden, n_hidden, n_layers)
         self.dropout_out = nn.Dropout(dropout)
     
-    @profile
     def step(
             self,
             decoder_state,
@@ -142,7 +140,10 @@ class Decoder(nn.Module):
                 self.attention, att_features, att_masks
             )
         ]
-        summary, distribution = zip(*attended)
+        if len(attended) > 0:
+            summary, distribution = zip(*attended)
+        else:
+            summary = distribution = ()
         all_features = torch.cat([hidden] + list(summary), dim=2)
         comb_features = self.dropout_out(self.combine(all_features).squeeze(0))
         pred_logits = self.predict(comb_features)
@@ -171,6 +172,9 @@ class Decoder(nn.Module):
             direct_logits = pred_logits
             copy_logits = torch.log(copy_probs)
             pred_logits = torch.log(comb_probs)
+        else:
+            direct_logits = pred_logits
+            copy_logits = None
 
         # done
         return (
@@ -190,7 +194,6 @@ class Decoder(nn.Module):
             #proj[i, :, tokens[i, :]] = 1
         return proj
 
-    @profile
     def forward(
             self,
             rnn_state,
@@ -263,7 +266,6 @@ class Decoder(nn.Module):
             list(zip(*all_extra))
         )
 
-    @profile
     def sample(
             self,
             rnn_state,
@@ -333,7 +335,6 @@ class Decoder(nn.Module):
             tok_out.append(row_out)
         return tok_out, score_out
 
-    @profile
     def beam(
             self,
             rnn_state,
