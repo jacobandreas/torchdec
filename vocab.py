@@ -54,6 +54,9 @@ class Vocab(object):
     def copy(self):
         return self._contents[self.COPY]
 
+    def unk(self):
+        return self._contents[self.UNK]
+
     def __str__(self):
         out = (
             ["Vocab("] 
